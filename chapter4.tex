@@ -1,0 +1,377 @@
+\chapter{Un approccio di machine learning al modello a tre fattori}
+\section{Introduzione}
+
+In questo capitolo effettuerò una breve analisi descrittiva e temporale dei rendimenti di sei portafogli nel periodo compreso tra il 2010 e il 2020. 
+
+La fonte ufficiale da cui ho acquisito i dati per poter svolgere l'analisi è il sito ufficiale di Kenneth French \cite{noauthor_kenneth_nodate} in cui vengono periodicamente aggiornati i dati relativi ai rendimenti e ai fattori di rischio.  
+
+L'utilizzo di un linguaggio di programmazione quale Python mi ha permesso di ottenere, tramite librerie specifiche, indici statistici relativi ai rendimenti e una stima dei parametri del modello di regressione lineare applicato ai rendimenti.
+
+L'obiettivo è quello di confrontare i risultati ottenuti con le evidenze emerse dagli studi svolti da Fama e French, delineando una eventuale somiglianza o discrepanza negli stessi.
+
+
+\section{Studio}
+Il punto di partenza di questo studio è il modello a tre fattori descritto dalla seguente funzione lineare: 
+\begin{equation}
+E(R_i)-r_f= \alpha_i + b_i[E(R_M)-r_f]+s_iE(SMB)+ h_iE(HML)
+\end{equation}
+L'analisi di regressione è una tecnica utilizzata per analizzare una serie di dati che consistono in una variabile dipendente e una o più variabili indipendenti. In questo specifico caso, la regressione lineare permette di spiegare il grado di influenza dei fattori $Mkt-Rf$, $SMB$,  $HML$ sul rendimento in eccesso di un titolo o di un portafoglio $i$ rispetto al risk-free rate $E(R_i)-r_f$. 
+
+L'applicazione del metodo dei minimi quadrati (in inglese Ordinary Least Squares, o OLS) consente di stimare i coefficienti $b$, $s$, $h$ che meglio spiegano la relazione tra la variabile dipendente $E(R_i)-r_f$ e le variabili indipendenti $Mkt-Rf$, $SMB$,  $HML$.
+
+\subsection{Variabile dipendente}
+
+La variabile dipendente che è stata considerata nell'analisi è il rendimento in eccesso rispetto al risk-free rate di sei portafogli. Tali portafogli includono titoli di società finanziarie e pubbliche che si collocano nei paesi maggiormente sviluppati quali: Australia, Austria, Belgio, Canada, Svizzera, Germania, Danimarca, Spagna, Finlandia, Francia, Gran Bretagna, Grecia, Hogk Kong, Irlanda, Italia, Giappone, Norvegia, Nuova Zelanda, Paesi Bassi, Norvegia, Nuova Zelanda, Portogallo, Svezia, Singapore, Stati Uniti. 
+
+I portafogli comprendono tutti i titoli di cui sia stato possibile avere a disposizione il valore di mercato ME a Dicembre del periodo t-1 e a Giugno del periodo t e che abbiano un valore BE positivo nel periodo t-1. 
+
+I rendimenti dei portafogli rappresentano la media ponderata dei rendimenti dei titoli, i quali sono registrati in valuta statunitense, includono dividendi e plus valenze, sono value weighted e vengono rilevati mensilmente.
+
+Per costruire i portafogli, i titoli sono stati suddivisi 1) in due aree in base alla capitalizzazione di mercato della società (ME) 2) in tre aree in base all'indice Book to Market (BE/ME). 
+
+Rispetto alla capitalizzazione di mercato vengono considerati due portafogli: quelli Small costituiti dai titoli di società la cui capitalizzazione di mercato rappresenta il 10\% più basso e quelli Big costituiti dai titoli di società la cui capitalizzazione di mercato rappresenta il 90\% più alto.
+
+Rispetto invece all'indice Book to Market i portafogli sono suddivisi considerando il valore dell'indice dei portafogli Big. Pertanto i portafogli Growth presentano un valore pari al 30° percentile, i portafogli Value presentano un valore pari al 70° percentile ed infine i Medium presentano un valore tra il 30° e il 70° percentile. 
+
+Attraverso l'intersezione tra portafogli Small e Big e i portafogli Growth, Medium e Value è possibile costruire sei portafogli:  Small-Growth, Small-Medium, Small-Value, Big-Growth, Big-Medium, Big-Value.
+
+Riporto un estratto dei dati a disposizione per la mia analisi
+\begin{table}[h]
+	\begin{center}
+	\begin{tabular}{ccccccc}
+		\toprule
+		Date          & S-L B/M  & S-M B/M & S-H B/M  & B- L B/M & B-M B/M & B-H B/M \\
+		\midrule
+		01/2010 & 	-1.93 & -1.67 & -1.05& -3.58 & -4.18 & -4.60 \\
+		02/2010 & 1.04 &	1.09&1.77	&	1.56 &1.05	&	1.13\\
+		03/2010  & 5.02 &	5.99 &    7.80& 4.94	&	6.26&	8.30\\
+		04/2010  & 3.19 &	3.25 &4.93 &-0.35 &0.70	&-0.43	\\
+		\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+		04/2020 & 15.61  & 11.49 & 10.11 &12.10  &9.74 &8.35\\
+		05/2020 & 10.37	& 6.93	&  4.39   &6.47 	& 5.00    & 2.26 \\
+		06/2020 & 3.28	&   2.69 & 2.33 & 4.65 &0.97 & 2.13\\
+		07/2020 & 3.34	&   3.41 &1.36 & 6.30&	4.62&0.98\\	\hline
+	\end{tabular}
+	\caption{Rendimenti medi mensili dei portafogli 2010-2020}
+	\label{tab:truthTables}  
+		\end{center} 
+\end{table}
+\subsection{Variabili indipendenti}
+Le variabili indipendenti sono rappresentate dai fattori di rischio $Mkt-Rf$, $SMB$,  $HML$. I tre fattori rappresentano rispettivamente:
+
+\begin{itemize}
+	\item $Mkt-Rf$: il rendimento in eccesso rispetto al risk-free rate che offre il portafoglio di mercato;
+	\item $SMB$: differenza fra i rendimenti offerti dai portafogli costituiti da titoli a bassa capitalizzazione (Small) e i rendimenti offerti dai portafogli costituiti da titoli ad alta capitalizzazione (Big); 
+	\item $HML$: differenza fra i rendimenti offerti dai portafogli con un alto indice BE/ME (Value) e i rendimenti offerti dai portafogli con un basso indice BE/ME (Growth).
+\end{itemize}
+
+Il fattore di mercato è dato dalla differenza fra il rendimento value-weighted di un portafoglio di mercato e il tasso di interesse di un T-bill con scadenza a un mese, mentre per la costruzione dei fattori SMB e HML viene seguita la medesima procedura spiegata nella sezione \ref{sectre}. 
+
+Riporto un estratto dei dati a disposizione per la mia analisi:
+\begin{figure}[h]
+	\begin{center}
+	\begin{tabular}{c c c c c}
+		\toprule
+		Date          & Mkt-Rf        &   SMB & HML & RF\\
+		\midrule
+		01/2010 & -3.73	&2.57 & -0.07 & 0.00 \\
+		02/2010 & 	1.29 &0.05 & 	0.15 & 	0.00\\
+		03/2010 & 	6.24 & -0.23 & 	3.06 & 	0.01\\
+		04/2010 & 0.48 & 	3.82 &	0.83 & 	0.01\\ 
+		\vdots & \vdots & \vdots & \vdots & \vdots \\
+		04/2020 & 10.68 & 2.34&-4.62& 0.00\\
+		05/2020 & 5.30 & 2.65 & -5.10 &0.01\\
+		06/2020& 2.76 &0.18&-1.74&0.01\\
+		07/2020& 4.33 &-1.27 &  -3.65&0.01\\ \hline
+	\end{tabular}
+	\caption{Fattori di rischio 2010-2020}
+	\label{tab:truthTables}   
+\end{center}
+\end{figure}
+\section{Risultati autori}
+
+Dagli studi condotti dai due autori ed esposti nelle sezioni \ref{secdue} e \ref{sectre} ne deriva che i portafogli Small e con alti indici BE/ME (Value) sovraperformano i portafogli Big e con bassi valori dell'indice Book to Market (Growth). Pertanto l'aggiunta di due fattori di rischio quali SMB e HML, che rappresentano una sorta di premio per il rischio atteso che viene pagato dai titoli perché ad essi è associato un rischio superiore, consentirebbe di spiegare le variazioni dei rendimenti tra i diversi portafogli. 
+
+Gli alti rendimenti dei portafogli Small in parte sono spiegati dal premio per il rischio rappresentato dal fattore SMB, poiché tali rendimenti saranno più sensibili rispetto agli altri al fattore SMB ci aspetteremo che il coefficiente relativo al fattore SMB sarà decrescente passando da portafogli Small a portafogli Big. 
+
+Per la stessa ragione parte dei rendimenti dei portafogli Value può essere spiegata dal premio per il rischio rappresentato dal fattore HML, che viene pagato in aggiunta per compensare l'incertezza. Il coefficiente relativo al fattore HML di portafogli con alti valori dell'indice BE/ME sarà decrescente passando da portafogli con alto BE/ME a portafogli con basso BE/ME.
+
+Attraverso 3 step gli autori mettono in risalto il forte ruolo svolto dai fattori di rischio. Svolgendo 3 regressioni differenti sui rendimenti in eccesso rispetto al risk free rate: la prima considerando il fattore di rischio di mercato, la seconda considerando i fattori di rischio legati alla capitalizzazione di mercato e all'indice Book to Market e infine la terza considerando tutti e tre i fattori di rischio congiuntamente mostrano che il fattore di rischio di mercato preso singolarmente spiega solo una parte delle variazioni dei rendimenti delle azioni, secondo loro la parte restante potrebbe essere spiegata dagli altri due fattori di rischio. 
+
+\subsection{Regressione con 1 fattore di rischio: Market}
+\begin{equation}
+E(R_i)-r_f= \alpha_i + b_i[E(R_M)-r_f]+\epsilon
+\end{equation}
+
+\begin{figure} [h]
+	\centering
+\includegraphics[width=0.9\linewidth]{"imgs/Tabella risultati 1 fattore"}
+\caption{Regressione univariata dei rendimenti in eccesso rispetto al risk-free rate di 25 portafogli 1963-1991}
+\label{fig:tabella-risultati-1-fattore}
+\end{figure}
+
+
+I coefficienti relativi al fattore di mercato sono molto alti pari a 1.40, 1.26, 1.14. 
+Tuttavia, dai risultati emerge un solo coefficiente di determinazione $R^2$ vicino a 0.9 in corrispondenza del portafoglio Big con un basso indice BE/ME, mentre in corrispondenza dei portafogli Small con un alto indice BE/ME i valori di tale parametro sono inferiori a 0.7 e 0.8. 
+
+Con riferimento a questo ultimo portafoglio, affinché sia possibile spiegare al meglio il rendimento è necessario introdurre i fattori SMB e HML i quali, in corrispondenza di esso rivelano una potenza esplicativa maggiore e consentono pertanto di ottenere un valore di $R^2$ superiore a 0.7 e 0.8. 
+
+\subsection{Regressione con 2 fattori di rischio: SMB, HML}
+
+\begin{equation}
+E(R_i)-r_f= \alpha_i +s_iE(SMB)+ h_iE(HML) + \epsilon
+\end{equation}
+
+\begin{figure} [h!]
+	\centering
+\includegraphics[width=1\linewidth]{"imgs/due fatt"}
+\caption{Regressione bivariata dei rendimenti in eccesso rispetto al risk-free rate di 25 portafogli 1963-1991}
+\label{fig:due-fatt}
+\end{figure}
+
+
+
+
+La seconda regressione mostra, in linea con le intuizioni degli autori, che i fattori SMB  e HML riescono a catturare le variazioni time-series dei rendimenti. Nello specifico ben 20 su 25 portafogli studiati presentano un valore di $R^2$ superiore a 0.2 mentre per ben 8 portafogli tale valore è superiore a 0.5. 
+
+Ciò che possiamo notare è che anche in questo caso il coefficiente relativo a SMB decresce passando da portafogli Small a portafogli Big e il coefficiente relativo a HML cresce passando da portafogli con basso indice BE/ME a portafogli con alto indice BE/ME. Tuttavia, per i 5 portafogli maggiori il valore del coefficiente di determinazione $R^2$ è molto basso (0.34, 0.18, 0.08, 0.04, 0.06), per questi portafogli la prima regressione evidenzia che il fattore di mercato ha una maggiore potenza esplicativa dei rendimenti infatti presentano un $R^2$ maggiore (0.89, 0.92, 0.84, 0.79, 0.69). Sembra quindi che i rendimenti dei portafogli ad alta capitalizzazione siano strettamente legati ai rendimenti del portafoglio di mercato. Le due variabili indipendenti utilizzate congiuntamente non sono pertanto sufficienti a spiegare la variabilità dei rendimenti dei portafogli, poiché esse spiegano solo una piccola parte pari ad esempio al 34\% e al 18\%. 
+\subsection{Regressione con 3 fattori di rischio: Market, SMB, HML}
+\begin{equation}
+E(R_i)-r_f= \alpha_i + b_i[E(R_M)-r_f]+s_iE(SMB)+ h_iE(HML)+\epsilon
+\end{equation}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=1\linewidth]{"imgs/Table 6"}
+	\label{fig:table-6}
+	\includegraphics[width=1\linewidth]{"imgs/table 6 2"}
+	\caption{Regressione dei rendimenti in eccesso rispetto al risk-free rate di 25 portafogli 1963-1991}
+	\label{fig:table-6-2}
+\end{figure}
+La terza regressione sembra fornire risultati migliori. Il coefficiente relativo a SMB, cattura la parte dei rendimenti che non viene spiegata dal rischio di mercato e dal rischio legato all'indice BE/ME, poichè presenta valori maggiori rispetto alla regressione precedente. Inoltre, così come suggeriscono studi precedenti la pendenza decresce dal portafoglio più piccolo al portafoglio più grande. Ai portafogli più piccoli (Small) essendo più rischiosi per gli investitori e per tutti gli stakeholder sono associati rendimenti superiori che permettono di compensare tale rischio. 
+
+Similmente, la pendenza relativa a HML è crescente, passa da un forte valore negativo per i portafogli con basso BE/ME a forti valori positivi per i portafogli con alti BE/ME. 
+
+Il fattore HML cattura chiaramente la variazione nei rendimenti relativa al fattore di rischio BE/ME che non viene catturata dal mercato e da SMB. 
+
+Date le pendenze di SMB e HML molto robuste, non sorprende che aggiungendo HML e SMB al fattore di mercato vi sia un aumento di $R^2$. Mentre il mercato da solo produce solo 2 valori su 25 maggiori di 0.9, nella regressione a 3 fattori ben 21 portafogli su 25 presentano valori di $R^2$ maggiori di 0.9. Inoltre nella regressione a un fattore il valore di  $R^2$ per i 5 portafogli più piccoli si colloca in un intervallo fra 0.61 e 0.70, nella regressione a 3 fattori cresce e si colloca in un intervallo tra 0.94 e 0.97. Anche il portafoglio che, nella regressione a 3 fattori presenta il valore $R^2$ più basso (0.83), presenta comunque un valore di $R^2$ superiore rispetto alla regressione ad un fattore (0.69). 
+
+Un interessante effetto che produce l'aggiunta dei due fattori SMB e HML alla regressione dei rendimenti riguarda il coefficiente $b$ del fattore di mercato. Nella regressione a un fattore notiamo infatti che i portafogli sovra performanti ossia i 5 portafogli più piccoli e quelli con l'indice BE/ME più basso presentano un $b$ pari a 1.4, mentre nei portafogli che vengono sovra performati ossia i 5 portafogli Big e i 5 che presentano alti valori BE/ME il valore di $b$ è pari a 0.89. Nella regressione a 3 fattori i valori di $b$ diventano pari a 1.04 e 1.06. In generale quindi aggiungendo i 2 fattori il coefficiente di $b$ cresce o decresce fino a 1. 
+
+Tale comportamento probabilmente è dovuto alla correlazione fra il fattore di mercato e il fattore SMB o HML. Sebbene tra HML  e SMB non vi sia una correlazione (-0.05), le correlazioni tra $R_M- R_F$ e i rendimenti SMB e HML sono rispettivamente pari a 0.32 e - 0.38.
+
+\section{Risultati studio}
+
+\subsection{Analisi descrittiva dei rendimenti}
+
+La tabella seguente sintetizza gli indici statistici calcolati sul rendimento in eccesso rispetto al tasso privo di rischio dei portafogli. 
+
+\medskip
+\begin{center}
+\begin{figure}
+	
+	\begin{tabular}{ccccccc}
+		\toprule
+		Parametri          & S-L B/M  & S-M B/M & S-H B/M  & B- L B/M & B-M B/M & B-H B/M \\
+		\midrule
+		Media & 	0.75 & 0.69 &0.55 & 1.06 & 0.72 & 0.41\\
+		Std & 4.75&	4.53 & 4.50 & 3.98 &  4.00& 4.90 \\
+		Min  & -15.40 & -17.46 & -20.17 & -9.37 & -12.95 & -21.90 \\ 	
+		25  & -1.14 &	-1.0 8 & -1.11 & -1.03 & -1.59 & -2.21 \\
+		50 & 0.70  & 0.90 & 0.76 & 1.33 & 1.00  & 0.97 \\
+		75 & 3.40 & 3.05 & 3.44 & 3.31 & 2.53 & 3.65 \\
+		Max & 15.61	& 11.63 & 10.11 & 12.10 & 10.42 & 10.25 \\ 
+		\hline
+			\end{tabular}
+
+	\caption{Parametri statistica descrittiva sui rendimenti}
+	\label{tab:truthTables15} 
+\end{figure}
+  	\end{center}
+\subsubsection{Media}
+Una prima differenza rispetto agli studi svolti da Fama e French riguarda la media dei rendimenti. Nei loro studi i portafogli che presentavano rendimenti medi superiori pari a 1.01, 1.02, 0.88, 0.84 erano quelli Small con alti valori dell'indice BE/ME. 
+
+Mentre come possiamo vedere nella \ref{tab:truthTables15} il portafoglio che presenta in media rendimenti superiori e pari a 1.06 è il portafoglio Big-Low BE/ME, seguito dai portafogli: Small-Low BE/ME con un rendimento medio pari a 0.75, Big-Medium BE/ME con un rendimento medio pari a 0.72, Small-Medium BE/ME con un rendimento medio pari a 0.69, Small-High BE/ME  con un rendimento medio pari a 0.55 ed infine il portafoglio Big-High BE/ME  con un rendimento medio pari a 0.41. 
+
+\subsubsection{Varianza e Campo di variazione}
+
+Il portafoglio che presenta invece una varianza maggiore dei rendimenti rispetto al valor medio è il portafoglio Big-High BE/ME con una deviazione standard pari a 4.9 viceversa il portafoglio i cui rendimenti variano in misura minore è il portafoglio Big-Low BE/ME con una deviazione standard pari a 3.98.
+
+Il portafoglio che presenta il rendimento minimo più basso è il Big-High BE/ME insieme a Small-High BE/ME con rendimenti minimi rispettivamente pari a -21.90 e -20.17, mentre i portafogli che registrano rendimenti massimi superiori sono: Small-Low BE/ME e Small-Medium BE/ME con massimi rispettivamente pari a 15.61 e 12.10. 
+
+
+In tutti i sei portafogli possiamo inoltre notare che il range entro il quale variano i rendimenti è molto ampio, il portafoglio Big-High BE/ME contiene titoli i cui rendimenti variano in un intervallo compreso tra $-21.90$ e $10.25$ di ampiezza pari a $32.15$. Viceversa il portafoglio Big-Low BE/ME presenta titoli i cui rendimenti variano in un intervallo molto meno ampio compreso fra $-9.37$ e $12.10$, di ampiezza pari a $21.4$. 
+
+Possiamo ulteriormente osservare che il portafoglio Big-High BE/ME che è caratterizzato da estremi più ampi presenta un campo di variazione superiore (32.15) e ciò è confermato dal valore della varianza (4.90). Viceversa il portafoglio Big-Low BE/ME caratterizzato da estremi meno ampi presenta un campo di variazione inferiore (21.4) e anch'esso è confermato dal valore della varianza (3.98). 
+
+In linea generale i portafogli che presentano una varianza maggiore sono i portafogli Small. Questi risultati, ad eccezione del portafoglio Big-High BE/ME la cui deviazione standard è pari a 4.9 sembrano corrispondere con i risultati di Fama e French i quali individuarono che i portafogli Small presentavano varianza maggiore rispetto ai portafogli Big. 
+
+\subsection{Analisi parametri regressione lineare}
+La tabella seguente presenta le stime dei parametri della regressione lineare calcolata sui rendimenti in eccesso rispetto al tasso privo di rischio dei portafogli.
+
+\hfill
+\begin{center}
+\begin{tabular}{cc}	
+\begin{tabular}{lcccc}
+	\toprule
+	
+	\multicolumn{4}{c}{\textbf{Small-Low BE/ME} } & \\
+	& Coeff. & t-stat & P-value &\\
+	$\alpha$ ***& 	-0.1321	& -2.922 & 0.004 &\\
+	$b$ ***& 1.0605 & 99.282& 0.000 &\\
+	$s$ ***& 1.0284& 32.594 & 0.000 &\\
+	$h$ ***&  -0.3658& -16.783 & 0.000 & \\
+	
+	$R^2$ & 0.990 & & & \\
+	\hline			
+\end{tabular} & \begin{tabular}{lcccc}
+\toprule
+
+\multicolumn{4}{c}{\textbf{Big-Low BE/ME} } & \\
+& Coeff. & t-stat & P-value &\\
+$\alpha$ *** & 	0.1131	& 3.153 & 0.002 &\\
+$b$ *** & 0.9709 & 114.540& 0.000 &\\
+$s$ ***  & -0.1467& -5.860 & 0.000 &\\
+$h$ *** &  -0.4795& -27.720 & 0.000 & \\
+
+$R^2$ & 0.991 & & & \\
+\hline	 
+\end{tabular} 
+\end{tabular}	
+\end{center}
+
+\begin{center}
+\begin{tabular}{cc}
+\begin{tabular}{lcccc}
+ \toprule
+ 
+ \multicolumn{5}{c}{\textbf{Small-Medium BE/ME} }\\
+ & Coeff. & t-stat & P-value &\\
+ $\alpha$ * & 	0.0016	& 0.043 & 0.966 &\\
+ $b$ ***& 1.0172 & 118.117& 0.000 &\\
+ $s$ ***  & 0.8268& 32.504 & 0.000 &\\
+ $h$ *** &  0.0595& 3.386 & 0.001 & \\
+ 
+ $R^2$ & 0.993 & & & \\
+ \hline			
+\end{tabular} & \begin{tabular}{lcccc}
+\toprule
+
+\multicolumn{5}{c}{\textbf{Big-Medium BE/ME} }\\
+& Coeff. & t-stat & P-value &\\
+$\alpha$ *& 	-0.0225	&-0.615 & 0.540 &\\
+$b$ ***& 0.9680 & 112.109& 0.000 &\\
+$s$ ***& -0.1318& -5-168 & 0.000 &\\
+$h$ *&  -0.0059& -0.333 & 0.739 & \\
+
+$R^2$ & 0.991 & & & \\
+\hline			
+\end{tabular}
+\end{tabular}		
+\end{center}
+
+\begin{center}
+\begin{tabular}{cc}
+	
+	 \begin{tabular}{lcccc}
+		\toprule
+		
+		\multicolumn{5}{c}{\textbf{Small-High BE/ME} }\\
+		& Coeff. & t-stat & P-value &\\
+		$\alpha$ ***& 	0.1024	& 3.033 & 0.003 &\\
+		$b$ ***& 0.9463 & 118.590& 0.000 &\\
+		$s$ ***& 0.8747& 37.108 & 0.000 &\\
+		$h$ ***&  0.4878& 29.958 & 0.000 & \\
+		
+		$R^2$ & 0.994 & & & \\
+		\hline			
+	\end{tabular}
+ & \begin{tabular}{lcccc}
+	\toprule
+	
+	\multicolumn{5}{c}{\textbf{Big-High BE/ME} }\\
+	& Coeff. & t-stat & P-value &\\
+	$\alpha$ *** & 	-0.1213	&-2.540 & 0.012 &\\
+	$b$ ***& 1.0855 & 96.188& 0.000 &\\
+	$s$ *& 0.0073& 0.220 & 0.826 &\\
+	$h$ ***&  0.6672& 28.974 & 0.000 & \\
+	
+	$R^2$ & 0.989 & & & \\
+	\hline	
+		
+\end{tabular}
+\end{tabular}
+\captionof{table}{Parametri regressione lineare sui rendimenti}
+\label{tab:truthTablesRegr} 
+\end{center}
+ 
+\subsubsection{Analisi valori $\alpha$, $b$, $s$ e $h$ }
+L'intercetta $\alpha$ della retta di regressione esprime il valore della variabile dipendente nel caso in cui le variabili indipendenti siano pari a 0. 
+ 
+Mentre i coefficienti di regressione $b, s$ e $h$ esprimono in che misura una variabile indipendente (Market, SMB, HML) contribuisce alle variazioni della variabile dipendente (Rendimenti), rappresentano la sensibilità dei rendimenti ai fattori di rischio. In altre parole il coefficiente ci dice in che misura la variabile dipendente varia in seguito ad una variazione pari a una unità della variabile indipendente, mantenendo costanti le altre variabili indipendenti.
+ 
+In primo luogo ciò che possiamo notare è che in tutti i portafogli il valore dell'intercetta $\alpha$ è vicina ma non uguale 0, ciò significa che le pendenze $b$, $s$, $h$ e i premi per il rischio ($[E(R_M)-r_f], SMB, HML$) non sono in grado di catturare una parte delle differenze fra i rendimenti dei portafogli. Pertanto è possibile che sia necessario introdurre altri fattori all'interno del modello che spieghino la quota dei rendimenti non spiegata dai fattori inclusi nell'analisi.  
+
+I rendimenti sembrano essere in tutti i sei casi molto sensibili al fattore di mercato infatti il coefficiente $b$ è molto vicino o superiore ad 1.
+
+
+Per ciò che concerne il coefficiente $s$ possiamo vedere che i valori decrescono passando da portafogli Small a portafogli Big, tuttavia non in modo monotono come invece vediamo nei risultati di Fama e French. Inoltre i valori relativi al portafoglio Small (1.02, 0.82, 0.87) sono consistenti rispetto ai portafogli Big  i quali invece presentano una pendenza molto vicina allo 0 e pressoché negativa (-0.1467, -0,1318, 0.0073). 
+ 
+In relazione al coefficiente $h$ possiamo vedere che nei portafogli Small e in quelli Big è monotono crescente all'aumentare dell'indice Book to Market. Per i portafogli Small, il coefficiente cresce da -0.3658 a 0.0595 fino a 0.4878, per i portafogli Big invece il coefficiente cresce da -0.4795 a -0.0059 fino a 0.6672. 
+
+\subsubsection{t-statistics e P-value} In aggiunta, nella \ref{tab:truthTablesRegr} possiamo vedere due ulteriori parametri molto importanti per la nostra analisi: t-statistics e P-value che ci consentono di capire se vi è una relazione lineare significativa tra le variabili indipendenti e la variabile dipendente. 
+
+Il \textit{t-statistic} viene calcolato come rapporto fra il valore del coefficiente e il suo errore standard. L'errore standard è una misura dell'errore della stima effettuata ossia dei coefficienti angolari. Tanto più l'errore standard è piccolo tanto più è attendibile il valore stimato attraverso la regressione lineare e tanto più alto sarà il valore di t-statistics. 
+
+Per ciò che riguarda invece il \textit{P-value}, in primo luogo vengono effettuate due ipotesi: 
+\begin{itemize}
+	\item \textit{Ipotesi nulla} prevede che il coefficiente angolare del fattore sia pari a 0, pertanto non vi è una relazione significativa fra la variabile dipendente e il fattore;
+	\item \textit{Ipotesi alternativa} prevede che il coefficiente angolare del fattore sia diverso da 0, pertanto vi è una relazione significativa fra la variabile dipendente e il fattore. 
+\end{itemize}
+
+Successivamente viene stabilito un livello di significatività che rappresenta la probabilità che le pendenze siano pari a 0. Per esempio il livello di significatività che viene preso in considerazione nella nostra analisi è pari a 0.05. Tale valore viene altresì definito P ed è il valore più basso al quale l'ipotesi nulla può essere respinta, pertanto significa affermare che vi è solo una probabilità pari al 5\% che non vi sia una relazione significativa tra la variabile indipendente e la variabile dipendente. Dunque vi è una probabilità pari al 95\% che il valore stimato si collochi in un certo intervallo di valori definito \textit{intervallo di rifiuto} cioè un insieme di valori della t-statistics che conducono al rifiuto dell'ipotesi nulla.  
+
+Date tali premesse, ciò che ci consente di stabilire se effettivamente vi è una relazione lineare tra i fattori e i rendimenti è il P-value, valori di tale parametro inferiori a 0.05 ci permettono di rifiutare l'ipotesi nulla e di ritenere invece la relazione fra la variabile dipendente e la variabile indipendente significativa. 
+
+Nello specifico quasi tutti i P-value che incontriamo nella  \ref{tab:truthTablesRegr} sono inferiori al livello di significatività pari a 0.05 (contrassegnati da tre asterischi) ad eccezione di quattro valori in corrispondenza del portafoglio Small-Medium BE/ME in cui troviamo un P-value pari a 0.966 relativo all'intercetta $\alpha$, il portafoglio Big-Medium BE/ME in cui troviamo un P-value pari a 0.540 relativo all'intercetta $\alpha$ e un P-value pari a 0.739 relativo al coefficiente $h$ e infine il portafoglio Big-High BE/ME in cui troviamo un P-value pari a 0.826 relativo al coefficiente $h$, il cui livello di significatività è superiore al 5\% (contrassegnati da un asterisco). 
+
+A conferma di ciò in corrispondenza di quei valori, il t-statistics è all'incirca pari a 0, pertanto è possibile che i valori stimati non siano attendibili.  
+
+\subsection{Trend dei rendimenti}
+
+\begin{figure}[h]
+		\centering
+	\includegraphics[width=1.1\linewidth]{"imgs/Trend rendimenti dal 2010"}
+	\caption{Trend rendimenti 2010-2020}
+	\label{fig:trend-rendimenti-dal-2010}
+\end{figure}
+
+
+
+Dal grafico in figura è possibile osservare che i rendimenti, per tutto il decennio considerato seguono un andamento molto simile. Tutti i portafogli presentano massimi e minimi relativi nei medesimi periodi dell'anno, nonostante i valori siano leggermente differenti fra di loro. 
+
+In linea di massima il portafoglio Big con un alto indice BE/ME (linea azzurra) presenta rendimenti superiori per la maggior parte del periodo considerato. Mentre il portafoglio Small con un alto indice BE/ME che, secondo le analisi degli autori dovrebbe sovra performare i portafogli Big, non sembra sostenere durante il 2010-2020 i risultati emersi dai loro studi, in aggiunta nei punti di minimo relativo è il portafoglio che sembra aver subito in modo più gravoso le conseguenze di un'eventuale situazione di crisi. 
+
+Mentre i portafogli Medium (linea rossa e arancione) presentano rendimenti che si collocano fra i portafogli più performanti e i portafogli meno performanti. 
+
+Infine in corrispondenza dei periodi Maggio 2010, Gennaio 2016 e Marzo 2020 notiamo che in linea generale tutti i portafogli hanno subito un enorme crollo dei rendimenti. Tali periodi coincidono con: la crisi economico-finanziaria generalizzata (2008-2010), la crisi dovuta al tracollo dei prezzi del petrolio e la crisi del mercato finanziario cinese (2016) ed infine la crisi dovuta alla pandemia di COVID-19 (2020).
+
+\subsection{Validità del modello a tre fattori nel periodo 2010-2020}
+I risultati esposti sembrano confermare la validità del modello a tre fattori sostenuta nei diversi studi svolti da Fama e French \cite{fama_common_1993}  \cite{fama_multifactor_1996} \cite{fama_cross-section_1992}. Dalla loro analisi emerge che i rendimenti dei titoli di società Small ritenute più rischiose sono molto sensibili al fattore di rischio $SMB$, il quale rappresenta un premio per il rischio che gli investitori effettivamente richiedono affinché siano disposti a detenere quei titoli. Viceversa i rendimenti dei titoli delle società Big, ritenute molto più stabili e meno rischiose non saranno sensibili al premio per il rischio. Anche in relazione al fattore di rischio $HML$ i loro risultati indicano una variazione in aumento del coefficiente passando da portafogli con un indice BE/ME molto basso a un indice BE/ME alto. Difatti i titoli di società con alti valori dell'indice richiedono un premio aggiuntivo in relazione alla loro rischiosità e pertanto i rendimenti saranno maggiormente sensibili a quel fattore di rischio. 
+
+Anche i valori del coefficiente $b$ ottenuti dai due autori rispecchiano perfettamente quelli contenuti nella \ref{tab:truthTablesRegr}, in generale tutti i portafogli presentano una sensibilità elevata al fattore di rischio di mercato.
+
+Infine il coefficiente di determinazione $R^2$ molto vicino a 1 in tutti i casi esposti ci indica che le variabili indipendenti sono in grado di spiegare quasi perfettamente le variazioni della variabile dipendente, il rendimento. 
+
+Ciò che invece differisce dai loro risultati è la performance dei portafogli Small-High BE/ME nel medio lungo periodo. Sia dalla media dei rendimenti, sia dal grafico \ref{fig:trend-rendimenti-dal-2010} è possibile notare che non vi è una chiara tendenza dei titoli Small-High BE/ME a sovra performare i titoli Big-Low BE/ME. 
+
+Nel capitolo \ref{chaptre} sono state illustrate alcune situazioni che sarebbero in grado di spiegare il Value Effect e il Growth Effect come ad esempio il \textit{Neglected firm effect} e il \textit{E/P effect}. Tuttavia è possibile che il primo effetto, dovuto ad una mancanza di informazioni, scompaia nel momento in cui l'impresa diviene più stabile. In tal caso gli investitori, gli stakeholder ed il mercato avendo un quadro informativo più completo sono in grado di prezzare adeguatamente il titolo. 
+
+Il secondo, causato da una momentanea overreaction quindi a un errore comportamentale, sarebbe anch'esso destinato a scomparire nel lungo periodo grazie ad un automatico aggiustamento dei prezzi. 
+
+Una ulteriore spiegazione che è possibile fornire a riguardo è relativa al fatto che l'analisi dei due autori include i soli titoli americani, molti economisti ritengono infatti che è possibile riscontrare il size effect soltanto in quei titoli, questo potrebbe spiegare perché nella mia analisi, che comprende i titoli dei paesi maggiormente sviluppati, non vi è una chiara sovra-performance dei titoli Small - Low BE/ME.
+
+Inoltre il Size effect è un effetto di medio-lungo periodo, l'analisi di Fama e French considera un periodo sufficientemente lungo pari a 31 anni, mentre la mia analisi si limita a osservare i rendimenti dei titoli lungo un periodo pari a 10 anni. Pertanto è probabile che nel breve-medio periodo i portafogli Small e con alto valore dell'indice BE/ME non siano in grado di mostrare la loro performance. 
+
+Alcuni economisti ritengono invece che, poiché molti fattori sembrano smettere di “lavorare” nel momento in cui vengono scoperti è possibile che questo effetto sia dovuto ad uno sfruttamento da parte degli investitori di tali anomalie per trarne un maggior vantaggio. 
+
+Gli stessi autori, in un recente studio svolto sui rendimenti a partire dal 1991 fino al 2019 mostrano che i rendimenti dei portafogli Big-Low BE/ME e dei portafogli Small-High BE/ME  hanno subito un calo rilevante a partire dal 2005. \`E possibile che vi siano altri fattori di rischio che dovrebbero essere inclusi all'interno dell'analisi, tuttavia i due autori non ritengono che questi risultati siano sufficienti per escludere il ruolo dei due fattori introdotti nel modello. 

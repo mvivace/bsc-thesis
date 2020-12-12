@@ -1,0 +1,98 @@
+\appendix
+\chapter{Dati Chapter 4}
+\section{Codice Python}
+
+\begin{verbatim}
+ff3= pd.read_csv('C:/Users/Monica/Desktop/File tesi/
+Fattori dal 2010.csv',index_col = 0)
+
+p6= pd.read_csv('C:/Users/Monica/Desktop/File tesi/
+Rendimenti dal 2010.csv',index_col = 0)
+p5= pd.read_csv('C:/Users/Monica/Desktop/File tesi/
+Rendimenti dal 2010.csv',index_col = 0) 
+
+ff3.index= pd.to_datetime(ff3.index, yearfirst=True, format= '%Y%m') 
+p6.index= pd.to_datetime(p6.index, yearfirst=True, format= '%Y%m')
+p5.index= pd.to_datetime(p6.index, yearfirst=True, format= '%Y%m')
+
+rf=ff3.RF
+ff3=ff3.iloc[:,[0,1,2,3]]
+p6=p6.sub(rf, axis = 0)
+p5=p5.sub(rf, axis = 0)
+
+ff3=ff3.iloc[:,[0,1,2]] 
+p6=p6.iloc[:,0]  
+
+start='2010-01'
+end='2020-07'
+
+y = p6[start:end]
+X = ff3[start:end]
+Y = y[start:end]
+Y = Y
+regr = linear_model.LinearRegression()
+regr.fit(X, Y)
+
+X = sm.add_constant(X)
+print(X)
+model = sm.OLS(Y, X).fit()
+predictions = model.predict(X)
+
+print_model = model.summary()
+print(print_model)
+
+text_file = open('C:/Users/Monica/Desktop/File tesi/Risultati 
+6.txt'.format(print_model), "w")
+text_file.write(str(print_model))
+text_file.close()
+
+M= p5[start:end]
+text_file = open('//MONICAPC/Users/Monica/Desktop/File tesi/
+Statistica descrittiva rendimenti 2010.txt'.format(print_model), "w")
+text_file.write(str(M.describe()))
+text_file.close()
+
+N= ff3[start:end]
+
+text_file = open('//MONICAPC/Users/Monica/Desktop/File tesi/
+Statistica descrittiva fattori 2010.txt'.format(print_model), "w")
+text_file.write(str(N.describe()))
+text_file.close()
+
+R = pd.read_csv('C:/Users/Monica/Desktop/File tesi/
+Rendimenti dal 2010.csv',index_col = 0) #dal 2010#
+S = pd.read_csv('C:/Users/Monica/Desktop/File tesi/
+
+Fattori dal 2010.csv',index_col = 0) #dal 2010#
+
+R.index= pd.to_datetime(R.index, yearfirst=True, 
+format= '%Y%m')
+S.index= pd.to_datetime(S.index, yearfirst=True, 
+format= '%Y%m')
+
+df = pd.DataFrame(R, columns=['SMALL LoBM','ME1 BM2',
+'SMALL HiBM','BIG LoBM','ME2 BM2','BIG HiBM'])
+df1 = pd.DataFrame(S, columns=['Mkt-RF','SMB','HML'])
+
+conc = pd.concat([df, df1], axis=1)
+conc.index= pd.to_datetime(conc.index, yearfirst=True, format= '%Y%m')
+
+text_file = open('//MONICAPC/Users/Monica/Desktop/File tesi/risultati 
+tabella.txt'.format(print_model), "w")
+text_file.write(str(conc))
+text_file.close()
+
+text_file = open('//MONICAPC/Users/Monica/Desktop/File tesi/
+
+Correlazione.txt'.format(print_model), "w")
+text_file.write(str(conc.corr()))
+text_file.close()
+
+fig = px.line(R, y=['SMALL LoBM','ME1 BM2','SMALL HiBM','BIG LoBM','ME2 BM2',
+'BIG HiBM'], range_x=['2010-01','2020-06'],  labels = {"value":"Monthly returns", 
+"Date":"Date"}, title='Trend of portfolios returns 2010-2020' ) 
+
+fig.show()
+fig.write_image("prova.svg")
+
+\end{verbatim}

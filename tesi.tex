@@ -1,0 +1,89 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{eurosym}
+\usepackage{booktabs}
+\usepackage{setspace}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{lipsum}
+
+
+\begin{document}
+\begin{center}
+	\begin{onehalfspace}
+		\par
+		\textbf{UNIVERSITÀ DEGLI STUDI DI MILANO-BICOCCA} \\
+		Scuola di Economia e Statistica \\
+		Corso di laurea in Economia delle Banche, delle Assicurazioni e degli Intermediari Finanziari
+	\end{onehalfspace}
+\end{center}
+\smallskip
+\begin{center}
+	\includegraphics[width=2.78cm, height=2.96cm]{"imgs/bicocca3"}
+\end{center}
+\par
+\smallskip
+\begin{doublespace}
+	\begin{center}
+		{{\large\textbf{LO SVILUPPO DEI MODELLI DI PRICING E L'ORIGINE DEL MODELLO A TRE FATTORI DI FAMA E FRENCH}}}
+	\end{center}
+\end{doublespace}
+
+\vfill
+
+
+\begin{onehalfspace}
+	\begin{flushleft}
+		{\large \textbf{Relatore:} \textit{Prof.\ Enzo Dia} \\}
+	\end{flushleft}
+	
+	\vspace{8mm}
+	\par
+	
+	\begin{flushright}
+		{\large \textbf{Tesi di laurea di:} \\
+			\textit{Monica Vivace \\ Matr n. 820470}}
+	\end{flushright}
+\end{onehalfspace}
+
+\vfill
+\par
+
+\begin{center}
+	{\large \textbf{Anno Accademico 2019-2020}}
+\end{center}
+
+
+\pagenumbering{gobble} % remove page numbering 
+
+
+
+\input{Abstract}
+\input{Ringraziamenti}
+
+\tableofcontents
+\cleardoublepage
+\pagenumbering{arabic} % reset numbering style
+
+\input{chapter1}
+\input{chapter2}
+\input{chapter3}
+\input{chapter4}
+\input{conclusioni}
+\input{Appendice}
+
+
+
+% Imposta lo stile di stampa della bibliografia a IEEE
+\bibliographystyle{ieeetr}
+% Importa il file bibliography.bib 
+\bibliography{bibliography}
+
+\end{document}
